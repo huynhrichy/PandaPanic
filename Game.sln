@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Express 2013 for Windows Desktop
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game", "Game\Game\Game.csproj", "{C9FA1AAB-501E-4665-83F2-64ECF7D0CE35}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameContent", "Game\GameContent\GameContent.contentproj", "{F7DFDD62-D46B-43CA-B0C6-A45C0A677572}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{3B40733D-84CB-47ED-AE94-1017D7453AA0}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\packages.config = .nuget\packages.config
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C9FA1AAB-501E-4665-83F2-64ECF7D0CE35}.Debug|x86.ActiveCfg = Debug|x86
+		{C9FA1AAB-501E-4665-83F2-64ECF7D0CE35}.Debug|x86.Build.0 = Debug|x86
+		{C9FA1AAB-501E-4665-83F2-64ECF7D0CE35}.Release|x86.ActiveCfg = Release|x86
+		{C9FA1AAB-501E-4665-83F2-64ECF7D0CE35}.Release|x86.Build.0 = Release|x86
+		{F7DFDD62-D46B-43CA-B0C6-A45C0A677572}.Debug|x86.ActiveCfg = Debug|x86
+		{F7DFDD62-D46B-43CA-B0C6-A45C0A677572}.Release|x86.ActiveCfg = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

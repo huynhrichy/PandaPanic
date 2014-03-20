@@ -1,0 +1,536 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.GamerServices;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
+//using Lidgren.Network;
+
+namespace Game
+{
+    /// <summary>
+    /// This is the main type for your game
+    /// </summary>
+    public class Game1 : Microsoft.Xna.Framework.Game
+    {
+        const int NUM_OF_AI = 30;
+
+        GraphicsDeviceManager graphics;
+        SpriteBatch spriteBatchGame;
+        SpriteBatch spriteBatchMenu;
+        Board board;
+        Texture2D background;
+        Texture2D pinkPanda;
+        Texture2D pinkPandaDown;
+        Texture2D pinkPandaLeft;
+        Texture2D pinkPandaRight;
+        Texture2D pinkPandaDead;
+        Texture2D bluePanda;
+        Texture2D whitePanda;
+        Texture2D greenPanda;
+        Rectangle mainFrame;
+        Player player1;
+        Player player2;
+        Player player3;
+        
+        
+        List<Entity> entities;
+        Random rand;
+        Score score;
+        Timer time;
+        Menu mainMenu;
+        Menu hostMenu;
+        Menu joinMenu;
+        SpriteFont font;
+        String hostIP;
+        int timePerPoint;
+        int scoreToWin;
+        int maxPlayers;
+        String temp="";
+        char tempC;
+
+        int maxX;
+        int minX;
+        int maxY;
+        int minY;
+
+        //Texture2D pandaTexture;
+        int stateNum = 0;
+        int editVar = 0;
+
+        public Game1()
+        {
+            graphics = new GraphicsDeviceManager(this);
+            Content.RootDirectory = "Content";  
+        }
+
+        /// <summary>
+        /// Allows the game to perform any initialization it needs to before starting to run.
+        /// This is where it can query for any required services and load any non-graphic
+        /// related content.  Calling base.Initialize will enumerate through any components
+        /// and initialize them as well.
+        /// </summary>
+        protected override void Initialize()
+        {
+            // TODO: Add your initialization logic here
+          
+
+            //Music init
+            playNewSong();
+
+            //Defaults
+            hostIP = "127.0.0.1";
+            timePerPoint = 90;
+            scoreToWin = 10;
+            maxPlayers = 8;
+
+            //score and menu stuff
+            font = Content.Load<SpriteFont>("text");
+            mainMenu = new Menu("");
+            hostMenu = new Menu("Host Game");
+            joinMenu = new Menu("Join Game");
+            mainMenu.AddMenuItem("Host Game", b => { if (b == Buttons.A) {
+                stateNum = 1;
+            }
+            });
+            mainMenu.AddMenuItem("Join Game", b => { if (b == Buttons.A) {
+                stateNum = 2;
+            }
+            });
+            mainMenu.AddMenuItem("Exit", b => { if (b == Buttons.A) { Exit(); } });
+            hostMenu.AddMenuItem("Time (Per Point)", b => { if (b == Buttons.A) {
+                editVar = 1;
+            }
+            });
+            hostMenu.AddMenuItem("Score (To Win)", b => { if (b == Buttons.A) {
+               editVar = 2;
+            }
+            });
+            hostMenu.AddMenuItem("Max Players", b => { if (b == Buttons.A) {
+               editVar = 3;
+            }
+            });
+            hostMenu.AddMenuItem("Start Game", b =>
+            {
+                if (b == Buttons.A)
+                {
+                    score = new Score(font, new Vector2(10, 10));
+                    time = new Timer(font, new Vector2(300, 10), timePerPoint);
+                    stateNum = 3;
+                }
+            });
+            hostMenu.AddMenuItem("Back", b => { if (b == Buttons.A) { stateNum=0; } });
+            joinMenu.AddMenuItem("IP (of host)", b => { if (b == Buttons.A) {
+                editVar = 4;
+            }
+            });
+            joinMenu.AddMenuItem("Join", b => { if (b == Buttons.A) {
+                stateNum = 1;
+            }
+            });
+            joinMenu.AddMenuItem("Back", b => { if (b == Buttons.A) { stateNum = 0; } });
+
+            Texture2D rect = new Texture2D(graphics.GraphicsDevice, 1, 1);
+            rect.SetData(new[] { Color.White });
+
+            Texture2D rect2 = new Texture2D(graphics.GraphicsDevice, 20, 20);
+            Color[] data = new Color[20 * 20];
+            for (int i = 0; i < data.Length; ++i) data[i] = Color.Red;
+            rect2.SetData(data);
+            //rect2.SetData(new[] { Color.Red });
+
+            //pandaTexture = new Texture2D();
+
+            pinkPanda = this.Content.Load<Texture2D>("Textures\\PinkPandaFrontWalk1");
+            pinkPandaDown = this.Content.Load<Texture2D>("Textures\\PinkPandaBackWalk1");
+            pinkPandaLeft = this.Content.Load<Texture2D>("Textures\\PinkPandaSideWalkLeft1");
+            pinkPandaRight = this.Content.Load<Texture2D>("Textures\\PinkPandaSideWalkRight1");
+            pinkPandaDead = this.Content.Load<Texture2D>("Textures\\PinkPandaDeathLeftSide");
+            greenPanda = this.Content.Load<Texture2D>("Textures\\GreenPandaFrontWalk1");
+            bluePanda = this.Content.Load<Texture2D>("Textures\\BluePandaFrontWalk1");
+            whitePanda = this.Content.Load<Texture2D>("Textures\\WhitePandaFrontWalk1");
+
+
+            //player1 = new Player(pinkPanda, new Vector2(100, 100), MakeTexture("Textures\\mask"), new Vector2(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
+            player2 = new Player(greenPanda, new Vector2(300, 100), MakeTexture("Textures\\mask"), new Vector2(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
+            player2.setPlayerNum(PlayerIndex.Two);
+            player3 = new Player(bluePanda, new Vector2(400, 100), MakeTexture("Textures\\mask"), new Vector2(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
+            player3.setPlayerNum(PlayerIndex.Three);
+
+            player1 = new Player(pinkPanda, new Vector2(100, 100),  MakeTexture("Textures\\mask"),new Vector2(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
+
+            player1.initPinkSprites(pinkPanda, pinkPandaDown, pinkPandaLeft, pinkPandaRight, pinkPandaDead);
+            //play = new Player(pandaTexture, new Vector2(100, 100));
+
+
+            //score
+            //SpriteFont font = Content.Load<SpriteFont>("text");
+            score = new Score(font, new Vector2(10,10));
+            time = new Timer(font, new Vector2(300, 10), timePerPoint);
+
+            //rest
+            base.Initialize();
+            
+           
+            rand = new Random();
+
+            entities = new List<Entity>();
+            entities.Add(player1);
+            entities.Add(player2);
+            entities.Add(player3);  
+            player1.type = rand.Next(4); // the color of the objects is dependent on their type
+
+            // adds the AI objects
+            for (int i = 0; i < NUM_OF_AI; i++)
+            {
+                AI tAI = new AI(rect, rand, new Vector2(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
+                tAI.type = rand.Next(4);
+                entities.Add(tAI);                
+            }
+            
+            
+            maxX = graphics.GraphicsDevice.Viewport.Width - player1.getTexture().Width;
+            minX = 0;
+            maxY = graphics.GraphicsDevice.Viewport.Height - player1.getTexture().Height;
+            minY = 0;
+
+            // Create Board
+            board = new Board(background, new Vector2(), mainFrame,rect, rand);
+            board.generateField();
+            entities.Add(player1);
+            entities.Add(board);
+            board.AddtoEntities(entities);
+            spriteBatchMenu = new SpriteBatch(GraphicsDevice);
+
+            score = new Score(font, new Vector2(10, 10));
+            time = new Timer(font, new Vector2(300, 10), timePerPoint);
+            stateNum = 0;
+        }
+
+        Texture2D MakeTexture(string image)
+        {
+            return Content.Load<Texture2D>(image);
+        }
+        /// <summary>
+        /// LoadContent will be called once per game and is the place to load
+        /// all of your content.
+        /// </summary>
+        protected override void LoadContent()
+        {
+            // Create a new SpriteBatch, which can be used to draw textures.
+            spriteBatchGame = new SpriteBatch(GraphicsDevice);
+
+            // Load the background content.
+            background = Content.Load<Texture2D>("Textures\\floor");
+
+            // Set the rectangle parameters.
+            mainFrame = new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+
+            //pandaTexture = Content.Load<Texture2D>("Textures\\stolenpanda");
+
+            // TODO: use this.Content to load your game content here
+        }
+
+        /// <summary>
+        /// UnloadContent will be called once per game and is the place to unload
+        /// all content.
+        /// </summary>
+        protected override void UnloadContent()
+        {
+            // TODO: Unload any non ContentManager content here
+        }
+
+        /// <summary>
+        /// Allows the game to run logic such as updating the world,
+        /// checking for collisions, gathering input, and playing audio.
+        /// </summary>
+        /// <param name="gameTime">Provides a snapshot of timing values.</param>
+        protected override void Update(GameTime gameTime)
+        {
+            if(Keyboard.GetState().IsKeyDown(Keys.Escape))
+            {
+                this.Exit();
+            }
+            foreach (Entity ent in entities)
+                ent.update();
+            if (stateNum == 0 && editVar==0) mainMenu.Navigate(Keyboard.GetState(), GamePad.GetState(PlayerIndex.One), gameTime);
+            else if (stateNum == 1 && editVar == 0) hostMenu.Navigate(Keyboard.GetState(), GamePad.GetState(PlayerIndex.One), gameTime);
+            else if (stateNum == 2 && editVar == 0) joinMenu.Navigate(Keyboard.GetState(), GamePad.GetState(PlayerIndex.One), gameTime);
+            else
+            {
+                  
+                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
+                    this.Exit();
+                foreach (Entity ent in entities)
+                    ent.update();                                
+
+                for (int i = 0; i < 3; i++)
+                {
+                    foreach (Entity entity in entities)
+                    {
+                        if (entity.GetType() == typeof(Block) || entity.GetType() == typeof(Board)) return;
+                        if (((Player)entities[i]).bounds.Intersects(((Moveable)entity).bounds))
+                        {
+                        if (((Player)entities[i]).attacking)
+                            {
+
+                                if (entity.GetType() == typeof(AI))
+                                {
+
+                                    ((AI)entity).type = 4;
+                                    ((AI)entity).dead = true;
+                                    ((AI)entity).speed.X = 0;
+
+                                    ((AI)entity).speed.Y = 0;
+                                    ((Player)entities.First()).type = 0;
+                                }
+                                else if (entity.GetType() == typeof(Player) && !entity.Equals(entities[i]))
+                                {
+                                    Console.WriteLine("Here");
+                                }
+                            }
+                        }
+                    }
+                }
+                ((Player)entities[0]).stopAttacking();
+                //((Player)player).attacking = false;
+                //player.type = 1;
+
+                // Allows the game to exit
+                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
+                    this.Exit();
+                foreach (Entity ent in entities)
+                    ent.update();
+                time.update(gameTime);
+                //detectCollision();
+
+                base.Update(gameTime);
+                if (time.getTime() < 0.1)
+                {
+                    time.reset();
+                    playNewSong();
+                }
+            }
+        }
+
+        /// <param name="gameTime">Provides a snapshot of timing values.</param>
+        protected override void Draw(GameTime gameTime)
+        {
+            if (stateNum == 0)
+            {
+                spriteBatchMenu.Begin();
+                mainMenu.DrawBG(spriteBatchMenu, Content.Load<Texture2D>("Textures\\FINAL_MENU"), mainFrame);
+                mainMenu.DrawMenu(spriteBatchMenu, graphics.GraphicsDevice.Viewport.Width, font);
+                spriteBatchMenu.End();
+            }
+            else if (stateNum == 1)
+            {
+                spriteBatchMenu.Begin();
+                hostMenu.DrawBG(spriteBatchMenu, Content.Load<Texture2D>("Textures\\FINAL_MENU"), mainFrame);
+                hostMenu.AddString(spriteBatchMenu, font, "1 Player Total", new Vector2(10, 10));
+                hostMenu.DrawMenu(spriteBatchMenu, graphics.GraphicsDevice.Viewport.Width, font);
+                spriteBatchMenu.End();
+            }
+            else if (stateNum == 2)
+            {
+                spriteBatchMenu.Begin();
+                joinMenu.DrawBG(spriteBatchMenu, Content.Load<Texture2D>("Textures\\FINAL_MENU"), mainFrame);
+                joinMenu.DrawMenu(spriteBatchMenu, graphics.GraphicsDevice.Viewport.Width, font);
+                spriteBatchMenu.End();
+            }
+            else
+            {
+                GraphicsDevice.Clear(Color.CornflowerBlue);
+                spriteBatchGame.Begin();
+                spriteBatchGame.Draw(background, mainFrame, Color.White);
+
+                for (int i = entities.Count - 1; i > 0; i--)
+                {
+                    entities[i].draw(gameTime, spriteBatchGame);
+                }        
+              
+
+                score.draw(gameTime, spriteBatchGame);
+                time.draw(gameTime, spriteBatchGame);
+                spriteBatchGame.End();
+            }
+            if (editVar == 1)
+            {
+                System.Threading.Thread.Sleep(110);
+                if (Keyboard.GetState().GetPressedKeys().GetLength(0) > 0)
+                {
+                    tempC = (Char)Keyboard.GetState().GetPressedKeys()[0];
+                    if (tempC>47 && tempC<58)temp += tempC;
+                }
+                spriteBatchMenu.Begin();
+                hostMenu.AddString(spriteBatchMenu, font, "(B to go back) Current Time: " + timePerPoint + " New Time: ", new Vector2(10, 400));
+                hostMenu.AddString(spriteBatchMenu, font, temp, new Vector2(510, 400));
+                spriteBatchMenu.End();
+                if (tempC == (Char)Keys.B)
+                {
+                    if (temp.Length > 0)
+                        timePerPoint = Int32.Parse(temp);
+                    editVar = 0;
+                    temp = "";
+                }
+            }
+            if (editVar == 2)
+            {
+                System.Threading.Thread.Sleep(110);
+                if (Keyboard.GetState().GetPressedKeys().GetLength(0) > 0)
+                {
+                    tempC = (Char)Keyboard.GetState().GetPressedKeys()[0];
+                    if (tempC > 47 && tempC < 58) temp += tempC;
+                }
+                spriteBatchMenu.Begin();
+                hostMenu.AddString(spriteBatchMenu, font, "(B to go back) Current Score: " + scoreToWin + " New Score: ", new Vector2(10, 400));
+                hostMenu.AddString(spriteBatchMenu, font, temp, new Vector2(530, 400));
+                spriteBatchMenu.End();
+                if (tempC == (Char)Keys.B)
+                {
+                    if (temp.Length > 0)
+                        scoreToWin = Int32.Parse(temp);
+                    editVar = 0;
+                    temp = "";
+                }
+            }
+            if (editVar == 3)
+            {
+                System.Threading.Thread.Sleep(110);
+                if (Keyboard.GetState().GetPressedKeys().GetLength(0) > 0)
+                {
+                    tempC = (Char)Keyboard.GetState().GetPressedKeys()[0];
+                    if (tempC > 47 && tempC < 58) temp += tempC;
+                }
+                spriteBatchMenu.Begin();
+                hostMenu.AddString(spriteBatchMenu, font, "(B to go back) Current Players: " + maxPlayers + " New Players: ", new Vector2(10, 400));
+                hostMenu.AddString(spriteBatchMenu, font, temp, new Vector2(570, 400));
+                spriteBatchMenu.End();
+                if (tempC == (Char)Keys.B)
+                {
+                    if (temp.Length > 0)
+                        maxPlayers = Int32.Parse(temp);
+                    editVar = 0;
+                    temp = "";
+                }
+            }
+            if (editVar == 4)
+            {
+                System.Threading.Thread.Sleep(110);
+                if (Keyboard.GetState().GetPressedKeys().GetLength(0) > 0)
+                {
+                    tempC = (Char)Keyboard.GetState().GetPressedKeys()[0];
+                    if (tempC > 47 && tempC < 58) temp += tempC;
+                    if ((int)tempC == 190) temp += '.';
+                    
+                }
+                spriteBatchMenu.Begin();
+                hostMenu.AddString(spriteBatchMenu, font, "(B to go back) Current IP: " + hostIP + " New IP: ", new Vector2(10, 400));
+                hostMenu.AddString(spriteBatchMenu, font, temp, new Vector2(540, 400));
+                spriteBatchMenu.End();
+                if (tempC == (Char)Keys.B)
+                {
+                    if (temp.Length > 0)
+                        hostIP = temp;
+                    editVar = 0;
+                    temp = "";
+                }
+            }
+        }
+
+        protected void playNewSong()
+        {
+            String songName = "Music\\" + new Random().Next(1, 11);
+            Song song = Content.Load<Song>(songName);
+            MediaPlayer.IsRepeating = true;
+            MediaPlayer.Play(song);
+            MediaPlayer.Volume = .4f;
+            if (songName.Contains("9")||songName.Contains("10")) MediaPlayer.Volume = 1;
+        }
+        void detectCollision()
+        {
+            foreach (Entity ent in entities)
+            {
+                if (ent.getPos().X > maxX)
+                {
+                   // Console.WriteLine("(play.getPos().X > MaxX)");
+                    //ghastlySpeed *= -1;
+                    //play.setSpeed(-1);
+                    ent.setPos(maxX - 8, ent.getPos().Y);
+                }
+
+                if (ent.getPos().X < minX)
+                {
+                    //Console.WriteLine("(play.getPos().X < MinX)");
+                    //ghastlySpeed *= -1;
+
+                    //play.setSpeed(-1);
+                    ent.setPos(minX, ent.getPos().Y);
+                }
+
+                if (ent.getPos().Y > maxY)
+                {
+                    //Console.WriteLine("(play.getPos().X > MaxY)");
+                    //ghastlySpeed *= -1;
+
+                    //play.setSpeed(-1);
+                    ent.setPos(ent.getPos().X, maxY - 8);
+                }
+
+                if (ent.getPos().Y < minY)
+                {
+                  //  Console.WriteLine("(play.getPos().X < MinY)");
+                    //ghastlySpeed *= -1;
+                    //play.setSpeed(-1);
+                    ent.setPos(ent.getPos().X, minY + 5);
+                }
+            }
+
+            if (player1.getPos().X > maxX)
+            {
+               // Console.WriteLine("(play.getPos().X > MaxX)");
+                //ghastlySpeed *= -1;
+                //play.setSpeed(-1);
+                player1.setPos(maxX-10, player1.getPos().Y);
+            }
+            /*
+            if (play.getPos().X < minX)
+            {
+                Console.WriteLine("(play.getPos().X < MinX)");
+                //ghastlySpeed *= -1;
+
+                //play.setSpeed(-1);
+                play.setPos(minX, play.getPos().Y);
+            }
+
+            if (play.getPos().Y > maxY)
+            {
+                Console.WriteLine("(play.getPos().X > MaxY)");
+                //ghastlySpeed *= -1;
+
+                //play.setSpeed(-1);
+                play.setPos(play.getPos().X, maxY - 10);
+            }
+
+            if (play.getPos().Y < minY)
+            {
+                Console.WriteLine("(play.getPos().X < MinY)");
+                //ghastlySpeed *= -1;
+                //play.setSpeed(-1);
+                play.setPos(play.getPos().X, minY + 10);
+            }
+            */
+
+
+            /*
+            if (!GraphicsDevice.Viewport.Bounds.Contains(play.bounds))
+            {
+                play.setPos(play.getPos().X, play.getPos().Y);
+            }*/
+        }
+    }
+}
